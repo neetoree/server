@@ -45,14 +45,6 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <configuration>
-          <files>${project.build.directory}/${artifactId}-${version}-dist/dist</files>
-          <url>scp://neetoree@neetoree.org/server</url>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 
