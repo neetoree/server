@@ -64,8 +64,10 @@ public class AuthApplication {
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
-            http.authorizeRequests().anyRequest().authenticated().and().formLogin().permitAll()
-                    .and().formLogin().disable().csrf().disable().cors().disable();
+            http.authorizeRequests().anyRequest().authenticated()
+                    .and().formLogin().disable()
+                    .csrf().disable().cors().disable()
+                    .userDetailsService(userService);
         }
     }
 
