@@ -13,7 +13,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
@@ -43,6 +46,7 @@ public class AuthApplication {
     }
 
     @Configuration
+    @EnableWebSecurity
     public static class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
         private final UserService userService;
 
@@ -56,17 +60,12 @@ public class AuthApplication {
             auth.userDetailsService(userService);
         }
 
-        @Bean
-        @Override
-        public AuthenticationManager authenticationManagerBean() throws Exception {
-            return super.authenticationManagerBean();
-        }
-
         @Override
         protected void configure(HttpSecurity http) throws Exception {
-            http.authorizeRequests().anyRequest().authenticated()
-                    .and().formLogin().disable()
-                    .csrf().disable().cors().disable()
+            http.authorizeRequests().anyRequest().authenticated().and()
+                    .formLogin().disable()
+                    .csrf().disable()
+                    .cors().disable()
                     .userDetailsService(userService);
         }
     }
@@ -79,7 +78,7 @@ public class AuthApplication {
         private final UserService userService;
 
         @Autowired
-        public SpringOAuthConfig(@Qualifier("authenticationManagerBean") AuthenticationManager authenticationManager, DataSource dataSource, UserService userService) {
+        public SpringOAuthConfig(AuthenticationManager authenticationManager, DataSource dataSource, UserService userService) {
             this.authenticationManager = authenticationManager;
             this.dataSource = dataSource;
             this.userService = userService;

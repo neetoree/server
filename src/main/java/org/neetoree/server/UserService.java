@@ -48,6 +48,8 @@ public class UserService implements UserDetailsService, ClientDetailsService {
             throw new NoSuchClientException(clientId);
         }
 
-        return new BaseClientDetails(clientId, "launcher", "read", "password,refresh_token,authorization_code", "LAUNCHER_USER");
+        BaseClientDetails details = new BaseClientDetails(clientId, "launcher", "read", "password,refresh_token,authorization_code", "LAUNCHER_USER");
+        details.setClientSecret(byUsername.getPassword());
+        return details;
     }
 }
