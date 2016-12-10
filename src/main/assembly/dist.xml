@@ -7,15 +7,14 @@
     </formats>
     <fileSets>
         <fileSet>
-            <outputDirectory>dist</outputDirectory>
+            <outputDirectory>/</outputDirectory>
             <directory>src/main/config</directory>
         </fileSet>
-        <fileSet>
-            <outputDirectory>dist</outputDirectory>
-            <directory>target</directory>
-            <includes>
-                <include>*.jar</include>
-            </includes>
-        </fileSet>
     </fileSets>
+    <files>
+        <file>
+            <source>target/${project.artifactId}-${project.version}.${project.packaging}</source>
+            <destName>server.jar</destName>
+        </file>
+    </files>
 </assembly>
