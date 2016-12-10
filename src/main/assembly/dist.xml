@@ -1,0 +1,21 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+    <id>dist</id>
+    <formats>
+        <format>dir</format>
+    </formats>
+    <fileSets>
+        <fileSet>
+            <outputDirectory>dist</outputDirectory>
+            <directory>src/main/config</directory>
+        </fileSet>
+        <fileSet>
+            <outputDirectory>dist</outputDirectory>
+            <directory>target</directory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+</assembly>
