@@ -1,9 +1,8 @@
 package org.neetoree.server;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -11,28 +10,27 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 
 import javax.sql.DataSource;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Alexander <iamtakingiteasy> Tumin on 2016-12-09.
  */
 
 @SpringBootApplication
-@EnableAutoConfiguration
 @EnableConfigurationProperties
 public class AuthApplication {
     public static void main(String[] args) {
@@ -45,64 +43,81 @@ public class AuthApplication {
         return DataSourceBuilder.create().build();
     }
 
-    @Configuration
-    @EnableWebSecurity
-    public static class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
-        private final UserService userService;
-
-        @Autowired
-        public SpringSecurityConfig(UserService userService) {
-            this.userService = userService;
-        }
-
-        @Override
-        protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-            auth.userDetailsService(userService);
-        }
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-            http.authorizeRequests().anyRequest().authenticated()
-                    .and()
-                    .httpBasic().disable()
-                    .formLogin().disable()
-                    .csrf().disable()
-                    .cors().disable()
-                    .userDetailsService(userService);
-        }
+    @Bean
+    public JdbcTokenStore tokenStore(DataSource dataSource) {
+        return new JdbcTokenStore(dataSource);
     }
 
-    @Configuration
+    @Bean
+    public DefaultTokenServices tokenServices(JdbcTokenStore tokenStore, UserService userService) {
+        DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
+        defaultTokenServices.setTokenStore(tokenStore);
+        defaultTokenServices.setAccessTokenValiditySeconds(10);
+        defaultTokenServices.setClientDetailsService(userService);
+        defaultTokenServices.setRefreshTokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(365));
+        defaultTokenServices.setSupportRefreshToken(true);
+        defaultTokenServices.setReuseRefreshToken(false);
+        return defaultTokenServices;
+    }
+
     @EnableAuthorizationServer
-    public static class SpringOAuthConfig extends AuthorizationServerConfigurerAdapter {
+    @Configuration
+    public static class AuthorizationServerConfigurer extends AuthorizationServerConfigurerAdapter {
         private final AuthenticationManager authenticationManager;
-        private final DataSource dataSource;
+        private final TokenStore tokenStore;
         private final UserService userService;
+        private final DefaultTokenServices tokenServices;
 
         @Autowired
-        public SpringOAuthConfig(AuthenticationManager authenticationManager, DataSource dataSource, UserService userService) {
+        public AuthorizationServerConfigurer(AuthenticationManager authenticationManager, TokenStore tokenStore, UserService userService, DefaultTokenServices tokenServices) {
             this.authenticationManager = authenticationManager;
-            this.dataSource = dataSource;
+            this.tokenStore = tokenStore;
             this.userService = userService;
+            this.tokenServices = tokenServices;
         }
 
         @Override
         public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
-            security.tokenKeyAccess("permitAll()").checkTokenAccess("permitAll()");
+            security.addTokenEndpointAuthenticationFilter(new RefreshFilter(tokenStore));
+        }
+
+        @Override
+        public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+            endpoints.tokenStore(tokenStore)
+                    .tokenServices(tokenServices)
+                    .authenticationManager(authenticationManager);
         }
 
         @Override
         public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
             clients.withClientDetails(userService);
         }
+    }
 
-        @Override
-        public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-            endpoints.tokenStore(tokenStore()).authenticationManager(authenticationManager);
+    @EnableResourceServer
+    @Configuration
+    public static class SpringResourceServerConfigurer implements ResourceServerConfigurer {
+        private final TokenStore tokenStore;
+        private final AuthenticationManager authenticationManager;
+        private final UserService userService;
+
+        @Autowired
+        public SpringResourceServerConfigurer(TokenStore tokenStore, AuthenticationManager authenticationManager, UserService userService) {
+            this.tokenStore = tokenStore;
+            this.authenticationManager = authenticationManager;
+            this.userService = userService;
         }
 
-        private TokenStore tokenStore() {
-            return new JdbcTokenStore(dataSource);
+
+        @Override
+        public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
+            resources.tokenStore(tokenStore);
+        }
+
+        @Override
+        public void configure(HttpSecurity http) throws Exception {
+            http.authorizeRequests().anyRequest().authenticated().and()
+                    .userDetailsService(userService);
         }
     }
 }
