@@ -41,10 +41,12 @@ public class RefreshFilter implements Filter {
         String clientId = map.get(OAuth2Utils.CLIENT_ID);
         try {
             Authentication extracted = tokenExtractor.extract(request);
-            OAuth2Authentication authentication = tokenStore.readAuthenticationForRefreshToken(new DefaultOAuth2RefreshToken(extracted.getPrincipal().toString()));
-            if (authentication != null) {
-                UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(clientId, "", Collections.singleton(new SimpleGrantedAuthority("USER")));
-                SecurityContextHolder.getContext().setAuthentication(token);
+            if (extracted != null) {
+                OAuth2Authentication authentication = tokenStore.readAuthenticationForRefreshToken(new DefaultOAuth2RefreshToken(extracted.getPrincipal().toString()));
+                if (authentication != null) {
+                    UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(clientId, "", Collections.singleton(new SimpleGrantedAuthority("USER")));
+                    SecurityContextHolder.getContext().setAuthentication(token);
+                }
             }
         } finally {
             filterChain.doFilter(servletRequest, servletResponse);
