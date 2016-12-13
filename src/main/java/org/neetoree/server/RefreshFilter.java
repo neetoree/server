@@ -1,14 +1,11 @@
 package org.neetoree.server;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.common.DefaultOAuth2RefreshToken;
 import org.springframework.security.oauth2.common.util.OAuth2Utils;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.security.oauth2.provider.authentication.BearerTokenExtractor;
-import org.springframework.security.oauth2.provider.authentication.TokenExtractor;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 
 import javax.servlet.*;
@@ -22,7 +19,6 @@ import java.util.Map;
  * Created by Alexander <iamtakingiteasy> Tumin on 2016-12-12.
  */
 public class RefreshFilter implements Filter {
-    private final TokenExtractor tokenExtractor = new BearerTokenExtractor();
     private final TokenStore tokenStore;
 
     public RefreshFilter(TokenStore tokenStore) {
@@ -40,9 +36,9 @@ public class RefreshFilter implements Filter {
         Map<String, String> map = getSingleValueMap(request);
         String clientId = map.get(OAuth2Utils.CLIENT_ID);
         try {
-            Authentication extracted = tokenExtractor.extract(request);
+            String extracted = map.get("refresh_token");
             if (extracted != null) {
-                OAuth2Authentication authentication = tokenStore.readAuthenticationForRefreshToken(new DefaultOAuth2RefreshToken(extracted.getPrincipal().toString()));
+                OAuth2Authentication authentication = tokenStore.readAuthenticationForRefreshToken(new DefaultOAuth2RefreshToken(extracted));
                 if (authentication != null) {
                     UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(clientId, "", Collections.singleton(new SimpleGrantedAuthority("USER")));
                     SecurityContextHolder.getContext().setAuthentication(token);
@@ -55,7 +51,7 @@ public class RefreshFilter implements Filter {
 
 
     private Map<String, String> getSingleValueMap(HttpServletRequest request) {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         Map<String, String[]> parameters = request.getParameterMap();
         for (String key : parameters.keySet()) {
             String[] values = parameters.get(key);
