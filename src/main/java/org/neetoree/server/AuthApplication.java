@@ -52,7 +52,7 @@ public class AuthApplication {
     public DefaultTokenServices tokenServices(JdbcTokenStore tokenStore, UserService userService) {
         DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
         defaultTokenServices.setTokenStore(tokenStore);
-        defaultTokenServices.setAccessTokenValiditySeconds(10);
+        defaultTokenServices.setAccessTokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(182));
         defaultTokenServices.setClientDetailsService(userService);
         defaultTokenServices.setRefreshTokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(365));
         defaultTokenServices.setSupportRefreshToken(true);
