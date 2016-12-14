@@ -1,7 +1,6 @@
 package org.neetoree.server;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
@@ -78,7 +77,7 @@ public class AuthApplication {
 
         @Override
         public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
-            security.addTokenEndpointAuthenticationFilter(new RefreshFilter(tokenStore));
+            security.addTokenEndpointAuthenticationFilter(new RefreshFilter(tokenStore, authenticationManager));
         }
 
         @Override

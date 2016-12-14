@@ -1,12 +1,15 @@
 package org.neetoree.server;
 
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.common.DefaultOAuth2RefreshToken;
 import org.springframework.security.oauth2.common.util.OAuth2Utils;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -20,9 +23,11 @@ import java.util.Map;
  */
 public class RefreshFilter implements Filter {
     private final TokenStore tokenStore;
+    private final AuthenticationManager authenticationManager;
 
-    public RefreshFilter(TokenStore tokenStore) {
+    public RefreshFilter(TokenStore tokenStore, AuthenticationManager authenticationManager) {
         this.tokenStore = tokenStore;
+        this.authenticationManager = authenticationManager;
     }
 
     @Override
@@ -42,6 +47,16 @@ public class RefreshFilter implements Filter {
                 if (authentication != null) {
                     UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(clientId, "", Collections.singleton(new SimpleGrantedAuthority("USER")));
                     SecurityContextHolder.getContext().setAuthentication(token);
+                }
+            } else {
+                String username = map.get("username");
+                String password = map.get("password");
+                if (username != null && password != null) {
+                    WebAuthenticationDetailsSource source = new WebAuthenticationDetailsSource();
+                    UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(username, password);
+                    authRequest.setDetails(source.buildDetails(request));
+                    Authentication authResult = authenticationManager.authenticate(authRequest);
+                    SecurityContextHolder.getContext().setAuthentication(authResult);
                 }
             }
         } finally {
