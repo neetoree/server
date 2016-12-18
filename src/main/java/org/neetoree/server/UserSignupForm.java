@@ -6,7 +6,6 @@ package org.neetoree.server;
 public class UserSignupForm {
     private String username;
     private String password;
-    private String challenge;
     private String uresponse;
 
     public String getUsername() {
@@ -23,14 +22,6 @@ public class UserSignupForm {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getChallenge() {
-        return challenge;
-    }
-
-    public void setChallenge(String challenge) {
-        this.challenge = challenge;
     }
 
     public String getUresponse() {
