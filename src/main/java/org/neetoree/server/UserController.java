@@ -40,7 +40,7 @@ public class UserController {
 
     @PostConstruct
     public void postConstruct() {
-        reCaptcha = ReCaptchaFactory.newReCaptcha(pubkey, privkey, false)
+        reCaptcha = ReCaptchaFactory.newReCaptcha(pubkey, privkey, false);
     }
 
     @RequestMapping("check/{token}")
