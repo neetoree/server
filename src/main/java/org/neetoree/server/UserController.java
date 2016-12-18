@@ -12,7 +12,6 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,12 +62,12 @@ public class UserController {
         }
 
         RestTemplate template = new RestTemplate();
-        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
-        objectBuilder.add("secret", privkey);
-        objectBuilder.add("response", form.getUresponse());
-        objectBuilder.add("remoteip", header);
-        String data = objectBuilder.build().toString();
-        InputStream is = new ReaderInputStream(new StringReader(template.postForObject("https://www.google.com/recaptcha/api/siteverify", data, String.class)));
+        StringBuilder sb = new StringBuilder();
+        sb.append("https://www.google.com/recaptcha/api/siteverify");
+        sb.append("?secret=").append(privkey);
+        sb.append("&response=").append(form.getUresponse());
+        sb.append("&remoteip=").append(header);
+        InputStream is = new ReaderInputStream(new StringReader(template.getForObject(sb.toString(), String.class)));
         JsonObject object = Json.createReader(is).readObject();
         if (!object.getBoolean("success")) {
             return -3;
