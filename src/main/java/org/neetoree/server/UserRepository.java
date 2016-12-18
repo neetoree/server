@@ -1,6 +1,7 @@
 package org.neetoree.server;
 
 import org.neetoree.server.orm.UserEntity;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 /**
@@ -8,4 +9,7 @@ import org.springframework.data.repository.CrudRepository;
  */
 public interface UserRepository extends CrudRepository<UserEntity, String> {
     UserEntity findByUsername(String username);
+
+    @Query("select u from org.neetoree.server.orm.UserEntity u where lower(u.username) = lower(?1)")
+    UserEntity findByUsernameIgnoreCase(String username);
 }
