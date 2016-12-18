@@ -115,7 +115,7 @@ public class AuthApplication {
 
         @Override
         public void configure(HttpSecurity http) throws Exception {
-            http.authorizeRequests().anyRequest().authenticated().and()
+            http.authorizeRequests().anyRequest().permitAll().and()
                     .userDetailsService(userService);
         }
     }
