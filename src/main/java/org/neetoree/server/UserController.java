@@ -57,6 +57,10 @@ public class UserController {
     @ResponseBody
     public boolean signup(@RequestBody UserSignupForm form, HttpServletRequest request) {
         String header = request.getHeader("X-Real-IP");
+        if (form.getUsername() == null || form.getPassword() == null || form.getChallenge() == null || form.getUresponse() == null) {
+            return false;
+        }
+
         if (form.getUsername().length() < 3 || form.getUsername().length() > 20 || !form.getUsername().matches("[a-zA-Z0-9]+")) {
             return false;
         }
